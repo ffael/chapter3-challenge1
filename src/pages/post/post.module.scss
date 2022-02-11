@@ -1,1 +1,37 @@
 // TODO
+.title {
+  color: var(--heading);
+  font-size: 48px;
+  line-height: 58px;
+  letter-spacing: -0.5px;
+  margin-bottom: 24px;
+}
+
+.header {
+  margin-bottom: 64px;
+}
+
+.content {
+  padding-bottom: 80px;
+  font-size: 18px;
+  font-weight: 400;
+  font-style: normal;
+
+  p {
+    line-height: 25px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-size: 36px;
+    line-height: 50px;
+    font-style: normal;
+    font-weight: 700;
+  }
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+}

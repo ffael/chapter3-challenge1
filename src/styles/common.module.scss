@@ -1,1 +1,26 @@
 // TODO
+.info {
+  display: flex;
+  align-items: center;
+  margin-top: 20px;
+
+  span {
+    margin-right: 24px;
+    display: inline-flex;
+    align-items: center;
+    color: var(--info);
+    height: 20px;
+    font-size: 14px;
+
+    svg {
+      margin-right: 8px;
+    }
+  }
+}
+.container {
+  max-width: 700px;
+  width: 700px;
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+}
