@@ -1,3 +1,4 @@
+/* eslint-disable react/no-danger */
 import { GetStaticPaths, GetStaticProps } from 'next';
 
 import Prismic from '@prismicio/client';
@@ -9,7 +10,7 @@ import ptBR from 'date-fns/locale/pt-BR';
 import { useRouter } from 'next/router';
 import { getPrismicClient } from '../../services/prismic';
 
-import { Header } from '../../components/Header';
+import Header from '../../components/Header';
 
 import commonStyles from '../../styles/common.module.scss';
 import styles from './post.module.scss';
@@ -145,7 +146,7 @@ export default function Post({ post }: PostProps): JSX.Element {
           </div>
         </header>
         <article className={`${commonStyles.container} ${styles.content}`}>
-          <div dangerouslySetInnerHTML={{ __html: content.heading.text }} />
+          <div dangerouslySetInnerHTML={{ __html: content.heading }} />
           <div dangerouslySetInnerHTML={{ __html: content.body.text }} />
         </article>
       </main>

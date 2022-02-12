@@ -15,7 +15,7 @@ import { getPrismicClient } from '../services/prismic';
 
 import commonStyles from '../styles/common.module.scss';
 import styles from './home.module.scss';
-import { Header } from '../components/Header';
+import Header from '../components/Header';
 
 interface Post {
   uid?: string;
@@ -40,10 +40,8 @@ export const getStaticProps: GetStaticProps = async () => {
   const prismic = getPrismicClient();
   const postsResponse = await prismic.query(
     [Prismic.Predicates.at('document.type', 'posts')],
-    { pageSize: 3, page: 1 }
+    { pageSize: 3 }
   );
-
-  console.log(postsResponse);
 
   const results = postsResponse.results.map(post => {
     return {
