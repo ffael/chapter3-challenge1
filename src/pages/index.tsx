@@ -4,7 +4,6 @@ import { format } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 
 import Prismic from '@prismicio/client';
-import { RichText } from 'prismic-dom';
 
 import Link from 'next/link';
 import Head from 'next/head';
@@ -40,46 +39,60 @@ export const getStaticProps: GetStaticProps = async () => {
   const prismic = getPrismicClient();
   const postsResponse = await prismic.query(
     [Prismic.Predicates.at('document.type', 'posts')],
-    { pageSize: 3 }
+    { pageSize: 2 }
   );
 
-  const results = postsResponse.results.map(post => {
+  const results: Post[] = postsResponse.results.map<Post>(post => {
     return {
       uid: post.uid,
-      first_publication_date: format(
-        Date.parse(post.first_publication_date),
-        'dd MMM yyyy',
-        {
-          locale: ptBR,
-        }
-      ),
+      first_publication_date: post.first_publication_date,
       data: {
-        title: RichText.asText(post.data.title),
-        subtitle: RichText.asText(post.data.subtitle),
-        author: RichText.asText(post.data.author),
+        title: post.data.title,
+        subtitle: post.data.subtitle,
+        author: post.data.author,
       },
     };
   });
 
+  const postsPagination: PostPagination = {
+    next_page: postsResponse.next_page === null ? '' : postsResponse.next_page,
+    results,
+  };
+
   return {
     props: {
-      postsPagination: {
-        next_page:
-          postsResponse.next_page === null ? '' : postsResponse.next_page,
-        results,
-      },
+      postsPagination,
     },
   };
 };
 
 export default function Home({ postsPagination }: HomeProps): JSX.Element {
-  const [allPosts, setAllPosts] = useState<PostPagination>(postsPagination);
+  const [posts, setPosts] = useState<Post[]>(
+    postsPagination.results.map(post => {
+      return {
+        uid: post.uid,
+        first_publication_date: format(
+          Date.parse(post.first_publication_date),
+          'dd MMM yyyy',
+          {
+            locale: ptBR,
+          }
+        ),
+        data: {
+          title: post.data.title,
+          subtitle: post.data.subtitle,
+          author: post.data.author,
+        },
+      };
+    })
+  );
+  const [nextPage, setNextPage] = useState<string>(postsPagination.next_page);
 
   async function getMorePosts(page: string): Promise<void> {
     await fetch(page)
       .then(res => res.json())
       .then(data => {
-        const results = data.results.map(post => {
+        const results: Post[] = data.results.map(post => {
           return {
             uid: post.uid,
             first_publication_date: format(
@@ -90,16 +103,14 @@ export default function Home({ postsPagination }: HomeProps): JSX.Element {
               }
             ),
             data: {
-              title: RichText.asText(post.data.title),
-              subtitle: RichText.asText(post.data.subtitle),
-              author: RichText.asText(post.data.author),
+              title: post.data.title,
+              subtitle: post.data.subtitle,
+              author: post.data.author,
             },
           };
         });
-        setAllPosts({
-          next_page: data.next_page === null && '',
-          results: [...results, ...allPosts.results],
-        });
+        setNextPage(data.next_page);
+        setPosts([...results, ...posts]);
       });
   }
 
@@ -113,7 +124,7 @@ export default function Home({ postsPagination }: HomeProps): JSX.Element {
       <main className={commonStyles.container}>
         <section>
           <ul className={styles.posts}>
-            {allPosts.results.map(post => (
+            {posts.map(post => (
               <li key={post.uid}>
                 <Link href={`/post/${post.uid}`}>
                   <a>
@@ -134,11 +145,11 @@ export default function Home({ postsPagination }: HomeProps): JSX.Element {
               </li>
             ))}
           </ul>
-          {allPosts.next_page !== '' && (
+          {nextPage && (
             <button
               className={styles.button}
               type="button"
-              onClick={() => getMorePosts(allPosts.next_page)}
+              onClick={() => getMorePosts(nextPage)}
             >
               Carregar mais posts
             </button>
