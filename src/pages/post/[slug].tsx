@@ -1,16 +1,15 @@
+/* eslint-disable func-names */
 /* eslint-disable react/no-danger */
 import { GetStaticPaths, GetStaticProps } from 'next';
-
-import Prismic from '@prismicio/client';
-import { RichText } from 'prismic-dom';
 import Head from 'next/head';
-import { FiCalendar, FiClock, FiUser } from 'react-icons/fi';
+import Prismic from '@prismicio/client';
 import { format } from 'date-fns';
-import ptBR from 'date-fns/locale/pt-BR';
+import { ptBR } from 'date-fns/locale';
+import { RichText } from 'prismic-dom';
 import { useRouter } from 'next/router';
-import { getPrismicClient } from '../../services/prismic';
-
+import { FiCalendar, FiClock, FiUser } from 'react-icons/fi';
 import Header from '../../components/Header';
+import { getPrismicClient } from '../../services/prismic';
 
 import commonStyles from '../../styles/common.module.scss';
 import styles from './post.module.scss';
@@ -65,28 +64,21 @@ export const getStaticProps: GetStaticProps = async context => {
   );
 
   const post = {
-    first_publication_date: format(
-      Date.parse(response.first_publication_date),
-      'dd MMM yyyy',
-      {
-        locale: ptBR,
-      }
-    ),
+    first_publication_date: response.first_publication_date,
     data: {
-      title: RichText.asText(response.data.title),
+      title: response.data.title,
       banner: {
         url: response.data.banner.url,
       },
-      author: RichText.asText(response.data.author),
-      content: {
-        heading: RichText.asHtml(response.data.content[0].heading),
-        body: {
-          text: RichText.asHtml(response.data.content[0].body),
+      author: response.data.author,
+      content: [
+        {
+          heading: response.data.content[0].heading,
+          body: response.data.content[0].body,
         },
-      },
+      ],
     },
   };
-
   return {
     props: {
       post,
@@ -95,61 +87,77 @@ export const getStaticProps: GetStaticProps = async context => {
 };
 
 export default function Post({ post }: PostProps): JSX.Element {
-  const { first_publication_date, data } = post;
-  const { title, banner, author, content } = data;
+  const { isFallback } = useRouter();
 
   function getReadingTime(): number {
     const WORDS_PER_MINUTE = 200;
+    const readingContent = RichText.asText(post.data.content[0].body);
 
-    const words = new Array(content).reduce(function (acc, item) {
-      return [...acc, item?.heading.split(' '), item?.body.text.split(' ')];
+    const words = new Array(readingContent).reduce(function (acc, item) {
+      return [...acc, item.split(' ')];
     }, []);
     return Math.ceil(words.flat().length / WORDS_PER_MINUTE);
-  }
-
-  const readingTime = getReadingTime();
-
-  const router = useRouter();
-
-  if (router.isFallback) {
-    return <div>Carregando...</div>;
   }
 
   return (
     <>
       <Head>
-        <title>Spacetraveling. | {title}</title>
+        <title>Spacetraveling. |</title>
         <link rel="icon" href="/favicon.png" />
       </Head>
       <Header />
-      <section
-        style={{
-          height: '400px',
-          background: `url(${banner.url})`,
-          backgroundSize: 'cover',
-          marginBottom: 80,
-        }}
-      />
-      <main className={styles.main}>
-        <header className={`${commonStyles.container} ${styles.header}`}>
-          <h1 className={styles.title}>{title}</h1>
-          <div className={commonStyles.info}>
-            <span>
-              <FiCalendar size={20} /> {first_publication_date}
-            </span>
-            <span>
-              <FiUser size={20} /> {author}
-            </span>
-            <span>
-              <FiClock size={20} /> {readingTime} min
-            </span>
-          </div>
-        </header>
-        <article className={`${commonStyles.container} ${styles.content}`}>
-          <div dangerouslySetInnerHTML={{ __html: content.heading }} />
-          <div dangerouslySetInnerHTML={{ __html: content.body.text }} />
-        </article>
-      </main>
+
+      {isFallback ? (
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          Carregando...
+        </div>
+      ) : (
+        <>
+          <section
+            style={{
+              height: '400px',
+              background: `url(${post.data.banner.url})`,
+              backgroundSize: 'cover',
+              marginBottom: 80,
+            }}
+          />
+          <main className={styles.main}>
+            <header className={`${commonStyles.container} ${styles.header}`}>
+              <h1 className={styles.title}>{post.data.title}</h1>
+              <div className={commonStyles.info}>
+                <span>
+                  <FiCalendar size={20} />{' '}
+                  {format(
+                    Date.parse(post.first_publication_date),
+                    'dd MMM yyyy',
+                    {
+                      locale: ptBR,
+                    }
+                  )}
+                </span>
+                <span>
+                  <FiUser size={20} /> {post.data.author}
+                </span>
+                <span>
+                  <FiClock size={20} /> {getReadingTime()} min
+                </span>
+              </div>
+            </header>
+            <article className={`${commonStyles.container} ${styles.content}`}>
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: post.data.content[0].heading,
+                }}
+              />
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: RichText.asHtml(post.data.content[0].body),
+                }}
+              />
+            </article>
+          </main>
+        </>
+      )}
     </>
   );
 }
